@@ -1,9 +1,17 @@
 #!/bin/bash
+
+#SBATCH -n 1
+#SBATCH -t 01:00:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=4
+#SBATCH --mail-user=arman.thariani@kaust.edu.sa
+#SBATCH --mail-type=ALL
+
 ################## BindCraft installation script
 ################## specify conda/mamba folder, and installation folder for git repositories, and whether to use mamba or $pkg_manager
 # Default value for pkg_manager
 pkg_manager='conda'
-cuda=''
+cuda='12.8'
 
 # Define the short and long options
 OPTIONS=p:c:
@@ -56,14 +64,19 @@ conda env list | grep -w 'BindCraft' >/dev/null 2>&1 || { echo -e "Error: Conda 
 
 # Load newly created BindCraft environment
 echo -e "Loading BindCraft environment\n"
-source ${CONDA_BASE}/bin/activate ${CONDA_BASE}/envs/BindCraft || { echo -e "Error: Failed to activate the BindCraft environment."; exit 1; }
-[ "$CONDA_DEFAULT_ENV" = "BindCraft" ] || { echo -e "Error: The BindCraft environment is not active."; exit 1; }
+conda env list
+source "$CONDA_BASE/etc/profile.d/conda.sh"
+conda activate BindCraft || { echo -e "Error: Failed to activate the BindCraft environment."; exit 1; }
+echo $CONDA_DEFAULT_ENV
 echo -e "BindCraft environment activated at ${CONDA_BASE}/envs/BindCraft"
 
 # install required conda packages
 echo -e "Instaling conda requirements\n"
 if [ -n "$cuda" ]; then
     CONDA_OVERRIDE_CUDA="$cuda" $pkg_manager install pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter ffmpeg pyrosetta fsspec py3dmol chex dm-haiku flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax jaxlib=*=*cuda* jax cuda-nvcc cudnn -c conda-forge -c nvidia  --channel https://conda.graylab.jhu.edu -y || { echo -e "Error: Failed to install conda packages."; exit 1; }
+    pip uninstall -y jaxlib jax jax-cuda12-plugin jax-cuda12-pjrt
+    pip cache purge
+    pip install --upgrade "jax[cuda12_local]"  
 else
     $pkg_manager install pip pandas matplotlib numpy"<2.0.0" biopython scipy pdbfixer seaborn libgfortran5 tqdm jupyter ffmpeg pyrosetta fsspec py3dmol chex dm-haiku flax"<0.10.0" dm-tree joblib ml-collections immutabledict optax jaxlib jax cuda-nvcc cudnn -c conda-forge -c nvidia  --channel https://conda.graylab.jhu.edu -y || { echo -e "Error: Failed to install conda packages."; exit 1; }
 fi
@@ -90,22 +103,6 @@ fi
 echo -e "Installing ColabDesign\n"
 pip3 install git+https://github.com/sokrypton/ColabDesign.git --no-deps || { echo -e "Error: Failed to install ColabDesign"; exit 1; }
 python -c "import colabdesign" >/dev/null 2>&1 || { echo -e "Error: colabdesign module not found after installation"; exit 1; }
-
-# AlphaFold2 weights
-echo -e "Downloading AlphaFold2 model weights \n"
-params_dir="${install_dir}/params"
-params_file="${params_dir}/alphafold_params_2022-12-06.tar"
-
-# download AF2 weights
-mkdir -p "${params_dir}" || { echo -e "Error: Failed to create weights directory"; exit 1; }
-wget -O "${params_file}" "https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar" || { echo -e "Error: Failed to download AlphaFold2 weights"; exit 1; }
-[ -s "${params_file}" ] || { echo -e "Error: Could not locate downloaded AlphaFold2 weights"; exit 1; }
-
-# extract AF2 weights
-tar tf "${params_file}" >/dev/null 2>&1 || { echo -e "Error: Corrupt AlphaFold2 weights download"; exit 1; }
-tar -xvf "${params_file}" -C "${params_dir}" || { echo -e "Error: Failed to extract AlphaFold2weights"; exit 1; }
-[ -f "${params_dir}/params_model_5_ptm.npz" ] || { echo -e "Error: Could not locate extracted AlphaFold2 weights"; exit 1; }
-rm "${params_file}" || { echo -e "Warning: Failed to remove AlphaFold2 weights archive"; }
 
 # chmod executables
 echo -e "Changing permissions for executables\n"

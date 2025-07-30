@@ -1,24 +1,17 @@
 #!/bin/bash
-#SBATCH --nodes 1
-#SBATCH --ntasks 1
-#SBATCH --cpus-per-task 1
-#SBATCH --partition=gpu
-#SBATCH --qos=gpu
+#SBATCH -N 1
+#SBATCH --partition=batch
+#SBATCH --time=100:00:00
+#SBATCH --mem=32G
 #SBATCH --gres=gpu:1
-#SBATCH --mem 42gb
-#SBATCH --time 72:00:00
-#SBATCH --output=bindcraft_%A.log
+#SBATCH --cpus-per-task=4
+#SBATCH --mail-user=arman.thariani@kaust.edu.sa
+#SBATCH --mail-type=ALL
 
 # Initialise environment and modules
-CONDA_BASE=$(conda info --base)
-source ${CONDA_BASE}/bin/activate ${CONDA_BASE}/envs/BindCraft
-export LD_LIBRARY_PATH=${CONDA_BASE}/lib
+source /ibex/user/thariaaa/miniforge/bin/activate /ibex/user/thariaaa/conda-environments/BindCraft || { echo "Error: Could not activate BindCraft environment."; exit 1; }
 
-# alternatively you can source the environment directly
-#source /path/to/mambaforge/bin/activate /path/to/mambaforge/envs/BindCraft
-
-# Get the directory where the bindcraft script is located
-SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR=$(pwd)
 
 # Parsing command line options
 SETTINGS=""

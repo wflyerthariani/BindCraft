@@ -60,7 +60,7 @@
     "enable_rejection_check": true,
     "acceptance_rate": 0.01,
     "start_monitoring": 600,
-    "af_params_dir": "",
+    "af_params_dir": "/ibex/reference/KSL/alphafold/2.3.1/params",
     "dssp_path": "",
     "dalphaball_path": ""
 }
