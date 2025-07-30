@@ -5,3 +5,6 @@ functions/__pycache__/biopython_utils.cpython-310.pyc
 functions/__pycache__/colabdesign_utils.cpython-310.pyc
 functions/__pycache__/generic_utils.cpython-310.pyc
 functions/__pycache__/pyrosetta_utils.cpython-310.pyc
+test/
+slurm*
+dcgm/
